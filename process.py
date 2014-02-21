@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 # encoding: utf-8
+
+'''
+process.py is a script to apply filters to improve your photos using the 
+GIMP, also generate thumbs and resize photos for the web
+'''
+# License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
+
+import argparse
 import shutil
 import os
 from os import listdir
@@ -8,6 +16,13 @@ from gimpscript import GimpScript
 from config import Config
 from PIL import Image, ImageFile
 from progressbar import ProgressBar
+
+__author__ = 'Wenceslau Graus'
+__copyright__ = '2014, Wenceslau Graus <wgraus at gmail.com>'
+__license__ = 'GPL v3'
+__version__ = '1.0'
+__email__ = 'wgraus@gmail.com'
+__docformat__ = 'restructuredtext en'
 
 bar = ProgressBar('blue', width=30, block='█', empty=' ')
 
@@ -19,16 +34,25 @@ class ProcesBatch():
         ''' Carrega la configuracio
         '''
         self.c = Config()
+        self.args = self.load_args()
         self.dir_treball = os.getcwd()
 
+    def load_args(self):
+        parser = argparse.ArgumentParser(description="Photo process batch")
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument("-v", "--verbose", action="store_true")
+        return parser.parse_args()
+
     def l(self, p):
-        print "%s ..." % p
+    	if self.args.verbose:
+    		print "%s ..." % p
 
     def copiar(self, a, b):
         ''' Copia carpeta
         '''
-        print "-> %s" % a
-        print "<- %s" % b
+        if self.args.verbose:
+        	print "-> %s" % a
+        	print "<- %s" % b
         shutil.copytree(a, b)
 
     def llista_imatges(self):
@@ -62,7 +86,7 @@ class ProcesBatch():
     def carpeta_original(self):
         ''' Copia carpeta original
         '''
-        print "Copying Original ..."
+        self.l("Copying Original")
         a = os.path.join(self.dir_treball, self.c.dir_fotos)
         b = os.path.join(self.c.dir_fotografies, self.c.original)
         self.copiar(a, b)
@@ -70,7 +94,7 @@ class ProcesBatch():
     def carpeta_edit(self):
         ''' Copia carpeta edit
         '''
-        print "Copying Edit ..."
+        self.l("Copying Edit")
         a = os.path.join(self.dir_treball, self.c.dir_fotos)
         b = os.path.join(self.c.dir_fotografies, self.c.edit)
         self.copiar(a, b)
@@ -124,3 +148,14 @@ class ProcesBatch():
         self.processar()
         self.carpeta_web()
         self.carpeta_edit()
+
+
+def main():
+    ''' main
+    '''
+    pb = ProcesBatch()
+    pb.run()
+
+
+if __name__ == '__main__':
+    main()
