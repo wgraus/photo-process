@@ -23,6 +23,11 @@ class Config():
         self.original = "%s (Original)" % (self.c)
         self.edit = "%s (Edit)" % (self.c)
 
+        b = "Backup"
+        self.bck_nom = self.cfg_par.get(b, "nom")
+        self.bck_folders = self.cfg_par.get(b, "folder_list")
+        self.bck_destination = self.cfg_par.get(b, "destination")
+
     def load_setup(self):
         ''' Load setup file
         '''
@@ -31,8 +36,11 @@ class Config():
 
         s = "Setup"
         self.dir_fotos = self.cfg_set.get(s, "dir_fotos")
+        self.dir_original = self.cfg_set.get(s, "dir_original")
         self.dir_fotografies = self.cfg_set.get(s, "dir_fotografies")
         self.dir_web = self.cfg_set.get(s, "dir_web")
+
+
 
         i = 'Image'
         self.quality = int(self.cfg_set.get(i, 'quality'))

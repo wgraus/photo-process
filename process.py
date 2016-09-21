@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
+"""
+Process.py.
 
-'''
-process.py is a script to apply filters to improve your photos using the 
-GIMP, also generate thumbs and resize photos for the web
-'''
+is a script to apply filters to improve your photos using the
+GIMP, also generate thumbs and resize photos for the web.
+"""
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 
 import argparse
@@ -15,7 +16,8 @@ from os.path import isfile, join
 from gimpscript import GimpScript
 from config import Config
 from PIL import Image, ImageFile
-from progressbar import ProgressBar
+from pb.progressbar import ProgressBar
+from logger import logger
 
 __author__ = 'Wenceslau Graus'
 __copyright__ = '2014, Wenceslau Graus <wgraus at gmail.com>'
@@ -24,57 +26,50 @@ __version__ = '1.0'
 __email__ = 'wgraus@gmail.com'
 __docformat__ = 'restructuredtext en'
 
-bar = ProgressBar('blue', width=30, block='█', empty=' ')
-
 
 class ProcesBatch():
-    ''' Procesa les fotos
-    '''
+    """Procesa les fotos."""
+
     def __init__(self):
-        ''' Carrega la configuracio
-        '''
+        """Carrega la configuracio."""
+        self.bar = ProgressBar('blue', width=60, block='█', empty=' ')
         self.c = Config()
         self.args = self.load_args()
+        if self.args.verbose:
+            logger.verbose = True
         self.dir_treball = os.getcwd()
 
     def load_args(self):
+        """Carrega args."""
         parser = argparse.ArgumentParser(description="Photo process batch")
         group = parser.add_mutually_exclusive_group()
         group.add_argument("-v", "--verbose", action="store_true")
         return parser.parse_args()
 
-    def l(self, p):
-    	if self.args.verbose:
-    		print "%s ..." % p
-
     def copiar(self, a, b):
-        ''' Copia carpeta
-        '''
+        """Copia carpeta."""
         if self.args.verbose:
-        	print "-> %s" % a
-        	print "<- %s" % b
+            print "-> %s" % a
+            print "<- %s" % b
         shutil.copytree(a, b)
 
     def llista_imatges(self):
-        ''' Carrega les imatges
-        '''
-        self.l("Loading Images")
+        """Carrega les imatges."""
+        logger("Loading Images")
         fotos = self.c.dir_fotos
         llista = [f for f in listdir(fotos) if isfile(join(fotos, f))]
         return llista
 
     def barra(self, image, llista):
-        ''' Barra de carrega
-        '''
+        """Barra de carrega."""
         i = llista.index(image) + 1
         p = float(i / float(len(llista)))
         percent = int(p * 100)
-        bar.render(percent, '%d ▻ %s' % (i, image))
+        self.bar.render(percent, '%d de %s' % (i, len(llista)))
 
     def processar(self):
-        ''' Procesa les imatges
-        '''
-        self.l("Processing")
+        """Procesa les imatges."""
+        logger("Processing")
         llista_im = self.llista_imatges()
         for image in llista_im:
             self.barra(image, llista_im)
@@ -84,25 +79,23 @@ class ProcesBatch():
         print
 
     def carpeta_original(self):
-        ''' Copia carpeta original
-        '''
-        self.l("Copying Original")
-        a = os.path.join(self.dir_treball, self.c.dir_fotos)
+        """Copia carpeta original."""
+        logger("Copying Original")
+        a = os.path.join(self.dir_treball, self.c.dir_original)
         b = os.path.join(self.c.dir_fotografies, self.c.original)
         self.copiar(a, b)
+        shutil.rmtree(a)
 
     def carpeta_edit(self):
-        ''' Copia carpeta edit
-        '''
-        self.l("Copying Edit")
+        """Copia carpeta edit."""
+        logger("Copying Edit")
         a = os.path.join(self.dir_treball, self.c.dir_fotos)
         b = os.path.join(self.c.dir_fotografies, self.c.edit)
         self.copiar(a, b)
         shutil.rmtree(a)
 
     def thumbs(self, i, image):
-        ''' Generate thumbs
-        '''
+        """Generate thumbs."""
         ruta = os.path.join(self.c.dir_fotos, image)
         dw = self.c.dir_web
         tp = self.c.tipus
@@ -117,7 +110,7 @@ class ProcesBatch():
 
         # names
         original_pattern = '%s%s_%s.jpg' % (self.c.pattern, str(i),
-                           self.c.thumb_pattern)
+                                            self.c.thumb_pattern)
         thumb_pattern = '%s%s.jpg' % (self.c.pattern, str(i))
 
         # paths
@@ -132,9 +125,8 @@ class ProcesBatch():
         _.save(t, optimize=True, quality=self.c.quality, progressive=True)
 
     def carpeta_web(self):
-        ''' Procesa les imatges
-        '''
-        self.l("Processing")
+        """Procesa les imatges."""
+        logger("Processing")
         l = self.llista_imatges()
         for i, image in enumerate(l):
             self.barra(image, l)
@@ -142,8 +134,7 @@ class ProcesBatch():
         print
 
     def run(self):
-        ''' Executa el proces
-        '''
+        """Executa el proces."""
         self.carpeta_original()
         self.processar()
         self.carpeta_web()
@@ -151,8 +142,7 @@ class ProcesBatch():
 
 
 def main():
-    ''' main
-    '''
+    """Main."""
     pb = ProcesBatch()
     pb.run()
 
